@@ -95,7 +95,7 @@ shuffle = function(o) {
 
 var game = new function() {
 	var actions = [],
-		callbacks = [];
+		game_callbacks = [];
 	
 	this.deck = [],
 	this.finished_tricks = [],
@@ -160,8 +160,8 @@ var game = new function() {
     
 	  actions.push( a );
     
-	  while (callbacks.length > 0) {
-	    callbacks.shift().callback([a]);
+	  while (game_callbacks.length > 0) {
+	    game_callbacks.shift().callback([a]);
 	  }
     
 	  while (actions.length > ACTION_BACKLOG)
@@ -175,11 +175,11 @@ var game = new function() {
 	    if (action.timestamp > since)
 	      matching.push(action)
 	  }
-    
+
 	  if (matching.length != 0) {
 	    callback(matching);
 	  } else {
-	    callbacks.push({ timestamp: new Date(), callback: callback });
+	    game_callbacks.push({ timestamp: new Date(), callback: callback });
 	  }
 	};
     
@@ -187,8 +187,8 @@ var game = new function() {
 	// they can hang around for at most 30 seconds.
 	setInterval(function () {
 	  var now = new Date();
-	  while (callbacks.length > 0 && now - callbacks[0].timestamp > 30*1000) {
-	    callbacks.shift().callback([]);
+	  while (game_callbacks.length > 0 && now - game_callbacks[0].timestamp > 30*1000) {
+	    game_callbacks.shift().callback([]);
 	  }
 	}, 1000);
 }
@@ -269,6 +269,7 @@ fu.get("/join", function (req, res) {
   //sys.puts("connection: " + nick + "@" + res.connection.remoteAddress);
 
   channel.appendMessage(session.nick, "join");
+  game.appendAction(session.id, "join", null);
   res.simpleJSON(200, { id: session.id, nick: session.nick});
 });
 
@@ -300,6 +301,13 @@ fu.get("/recv", function (req, res) {
     if (session) session.poke();
     res.simpleJSON(200, { messages: messages });
   });
+
+  game.query(since, function (actions) {
+    if (session) session.poke();
+    res.simpleJSON(200, { actions: actions });
+  });
+
+  
 });
 
 fu.get("/send", function (req, res) {
@@ -315,5 +323,21 @@ fu.get("/send", function (req, res) {
   session.poke();
 
   channel.appendMessage(session.nick, "msg", text);
+  res.simpleJSON(200, {});
+});
+
+fu.get("/act", function (req, res) {
+  var uid = qs.parse(url.parse(req.url).query).uid;
+  var actn = qs.parse(url.parse(req.url).query).actn;
+
+  var session = sessions[id];
+  if (!session || !text) {
+    res.simpleJSON(400, { error: "No such session id" });
+    return; 
+  }
+
+  session.poke();
+
+  game.appendAction(uid, actn.type, actn.content);
   res.simpleJSON(200, {});
 });

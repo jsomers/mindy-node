@@ -155,6 +155,15 @@ function longPoll (data) {
     return;
   }
 
+  if (data && data.actions) {
+	for (var i = 0; i < data.actions.length; i++) {
+		var action = data.actions[i];
+		//track oldest message so we only request newer messages from server
+	      if (action.timestamp > CONFIG.last_message_time)
+	        CONFIG.last_message_time = action.timestamp;
+	}
+  }
+
   //process any updates we may have
   //data will be null on the first call of longPoll
   if (data && data.messages) {
@@ -226,86 +235,10 @@ function send(msg) {
   }
 }
 
-var game_transmission_errors = 0;
-var first_game_poll = true;
-
-
-//process updates if we have any, request updates from the server,
-// and call again with response. the last part is like recursion except the call
-// is being made from the response handler, and not at some point during the
-// function's execution.
-function longPollGame (data) {
-  if (game_transmission_errors > 2) {
-    showConnect();
-    return;
-  }
-
-  //process any updates we may have
-  //data will be null on the first call of longPoll
-  if (data && data.actions) {
-    for (var i = 0; i < data.actions.length; i++) {
-      var action = data.actions[i];
-
-      //track oldest action so we only request newer actions from server
-      if (action.timestamp > CONFIG.last_action_time)
-        CONFIG.last_action_time = action.timestamp;
-
-      //dispatch new actions to their appropriate handlers
-      switch (action.type) {
-        //case "msg":
-        //  if(!CONFIG.focus){
-        //    CONFIG.unread++;
-        //  }
-        //  addMessage(message.nick, message.text, message.timestamp);
-        //  break;
-        //
-        //case "join":
-        //  userJoin(message.nick, message.timestamp);
-        //  break;
-        //
-        //case "part":
-        //  userPart(message.nick, message.timestamp);
-        //  break;
-      }
-    }
-    //update the document title to include unread action count if blurred
-    //updateTitle();
-
-    //only after the first request for messages do we want to show who is here
-    //if (first_poll) {
-    //  first_poll = false;
-    //  who();
-    //}
-  }
-
-  //make another request
-  $.ajax({ cache: false
-         , type: "GET"
-         , url: "/recv_game"
-         , dataType: "json"
-         , data: { since: CONFIG.last_action_time, id: CONFIG.id }
-         , error: function () {
-             addMessage("", "long poll error. trying again...", new Date(), "error");
-             game_transmission_errors += 1;
-             //don't flood the servers on error, wait 10 seconds before retrying
-             setTimeout(longPollGame, 10*1000);
-           }
-         , success: function (data) {
-             game_transmission_errors = 0;
-             //if everything went well, begin another request immediately
-             //the server will take a long time to respond
-             //how long? well, it will wait until there is another message
-             //and then it will return it to us and close the connection.
-             //since the connection is closed when we get data, we longPoll again
-             longPollGame(data);
-           }
-         });
-}
-
 //submit a new action to the server
 function act(actn) {
   if (CONFIG.debug === false) {
-    jQuery.get("/act", {id: CONFIG.id, actn: msg}, function (data) { }, "json");
+    jQuery.get("/act", {uid: CONFIG.id, actn: actn}, function (data) { }, "json");
   }
 }
 
