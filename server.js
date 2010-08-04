@@ -304,7 +304,7 @@ fu.get("/recv", function (req, res) {
 
   game.query(since, function (actions) {
     if (session) session.poke();
-    res.simpleJSON(200, { actions: actions });
+    res.simpleJSON(200, { actions: actions, game: game });
   });
 
   
@@ -328,16 +328,18 @@ fu.get("/send", function (req, res) {
 
 fu.get("/act", function (req, res) {
   var uid = qs.parse(url.parse(req.url).query).uid;
-  var actn = qs.parse(url.parse(req.url).query).actn;
+  var type = qs.parse(url.parse(req.url).query).type;
+  var content = qs.parse(url.parse(req.url).query).content;
+  sys.puts(type);
 
-  var session = sessions[id];
-  if (!session || !text) {
+  var session = sessions[uid];
+  if (!session || !type) {
     res.simpleJSON(400, { error: "No such session id" });
     return; 
   }
 
   session.poke();
 
-  game.appendAction(uid, actn.type, actn.content);
+  game.appendAction(uid, type, content);
   res.simpleJSON(200, {});
 });

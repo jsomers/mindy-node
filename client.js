@@ -158,9 +158,21 @@ function longPoll (data) {
   if (data && data.actions) {
 	for (var i = 0; i < data.actions.length; i++) {
 		var action = data.actions[i];
-		//track oldest message so we only request newer messages from server
+		//track oldest action so we only request newer actions from server
 	      if (action.timestamp > CONFIG.last_message_time)
 	        CONFIG.last_message_time = action.timestamp;
+		
+		//dispatch new actions to their appropriate handlers
+		switch (action.type) {
+			case "deal_five":
+				break;
+			case "deal_rest":
+				break;
+			case "choose_trump":
+				break;
+			case "play_card":
+				break;
+		}
 	}
   }
 
@@ -238,7 +250,7 @@ function send(msg) {
 //submit a new action to the server
 function act(actn) {
   if (CONFIG.debug === false) {
-    jQuery.get("/act", {uid: CONFIG.id, actn: actn}, function (data) { }, "json");
+    jQuery.get("/act", {uid: CONFIG.id, type: actn.type, content: actn.content}, function (data) { }, "json");
   }
 }
 
