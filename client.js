@@ -279,7 +279,7 @@ function start() {
 }
 
 function hand() {
-	console.log(game.hands[CONFIG.id]);
+	return game.hands[CONFIG.id];
 }
 
 function play(card) {
