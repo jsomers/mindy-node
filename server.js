@@ -93,6 +93,22 @@ shuffle = function(o) {
 	return o;
 };
 
+card_ranks = {
+	"2": 2,
+	"3": 3,
+	"4": 4,
+	"5": 5,
+	"6": 6,
+	"7": 7,
+	"8": 8,
+	"9": 9,
+	"10": 10,
+	"J": 11,
+	"Q": 12,
+	"K": 13,
+	"A": 14
+}
+
 var game = new function() {
 	var actions = [],
 		game_callbacks = [];
@@ -105,8 +121,6 @@ var game = new function() {
 	this.players = [],
 	this.hands = {},
 	this.trump = null;
-	
-	
 	
 	this.dealFive = function() {
 		suits = ["h", "d", "s", "c"]
@@ -139,14 +153,53 @@ var game = new function() {
 		this.hands[this.players[3]] = this.hands[this.players[3]].concat(cards_left.slice(24, 32));
 	}
 	
+	this.decideTrick = function(trick) {
+		var first_card = trick[0][0];
+		var first_crd = first_card.split("");
+		var lead_suit = first_crd.pop();
+		var winning = [card_ranks[first_crd.join("")], lead_suit, first_card, trick[0][1]];
+		for (i in [1, 2, 3]) {
+			var i = parseInt(i) + 1;
+			var card = trick[i][0];
+			var plyr = trick[i][1];
+			var crd = card.split("");
+			var suit = crd.pop();
+			var rank = card_ranks[crd.join("")];
+			if (suit == this.trump && winning[1] != this.trump) {
+				winning = [rank, suit, card, plyr];
+				continue;
+			} else if (suit == this.trump && winning[1] == this.trump) {
+				if (rank > winning[0]) {
+					winning = [rank, suit, card, plyr];
+					continue;
+				} else {
+					continue;
+				}
+			} else if (suit != this.trump && winning[1] == this.trump) {
+				continue;
+			} else if (suit != this.trump && winning[1] != this.trump) {
+				if (suit != lead_suit) {
+					continue;
+				} else {
+					if (rank > winning[0]) {
+						winning = [rank, suit, card, plyr];
+						continue;
+					} else {
+						continue;
+					}
+				}
+			}
+		}
+		return [winning[2], winning[3]]
+	}
+	
 	this.playCard = function(plyr, card) {
 		//TODO: assert that current_player = plyr;
 		this.hands[plyr].splice(this.hands[plyr].indexOf(card), 1); // rm card from player hand.
 		this.cards_played += 1;
-		this.current_trick.push(card);
+		this.current_trick.push([card, plyr]);
 		if (this.current_trick.length == 4) {
-			this.finished_tricks.push(this.current_trick);
-			// TODO: must assign a winner to tricks. Write function to do this.
+			this.finished_tricks.push({"trick": this.current_trick, "winner": this.decideTrick(this.current_trick)});
 			this.current_trick = [];
 		};
 		this.current_player = this.players[(this.players.indexOf(this.current_player) + 1) % 4];
@@ -175,6 +228,7 @@ var game = new function() {
 		  this.playCard(uid, content);
 		  break;
 	    case "part":
+		  game.players.splice(game.players.indexOf(uid), 1);
 	      break;
 	  }
 	
@@ -237,6 +291,7 @@ function createSession (nick) {
 
     destroy: function () {
       channel.appendMessage(session.nick, "part");
+	  game.appendAction(session.id, "part", null);
       delete sessions[session.id];
     }
   };
