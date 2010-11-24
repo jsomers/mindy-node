@@ -7,6 +7,8 @@ var CONFIG = { debug: false
              , unread: 0 //updated in the message-processing loop
              };
 
+var game = { };
+
 var nicks = [];
 
 //updates the users link to reflect the number of active users
@@ -162,15 +164,33 @@ function longPoll (data) {
 	      if (action.timestamp > CONFIG.last_message_time)
 	        CONFIG.last_message_time = action.timestamp;
 		
+		game = data.game //overwrite local game object with
+						 //data.game recv'd from server
+
 		//dispatch new actions to their appropriate handlers
 		switch (action.type) {
 			case "deal_five":
-				break;
-			case "deal_rest":
+				if (game.current_player == CONFIG.id) {
+					addMessage("HEY!", "It's your turn to choose trump", action.timestamp);
+				} else {
+					addMessage("...", "Waiting for " + game.current_player + " to choose trump", action.timestamp);
+				}
 				break;
 			case "choose_trump":
+				if (game.current_player == CONFIG.id) {
+					addMessage("OKAY!", "You chose " + action.content + ". It's your turn!", action.timestamp);
+				} else {
+					addMessage("TRUMP CHOSEN", "Trump is " + action.content + ".", action.timestamp);
+				}
 				break;
 			case "play_card":
+				if (game.current_player == CONFIG.id) {
+					addMessage(action.uid + " played " + action.content + ".", "Now it's your turn: choose a card.", action.timestamp);
+				} else {
+					addMessage("OKAY", action.uid + " played " + action.content + ".", action.timestamp);
+				}
+				break;
+			case "last_card":
 				break;
 		}
 	}
@@ -248,12 +268,24 @@ function send(msg) {
 }
 
 //submit a new action to the server
-function act(actn) {
+function act(type, content) {
   if (CONFIG.debug === false) {
-    jQuery.get("/act", {uid: CONFIG.id, type: actn.type, content: actn.content}, function (data) { }, "json");
+    jQuery.get("/act", {uid: CONFIG.id, type: type, content: content}, function (data) { }, "json");
   }
 }
 
+function start() {
+	act("deal_five", null);
+}
+
+function hand() {
+	console.log(game.hands[CONFIG.id]);
+}
+
+function play(card) {
+	//TODO: make sure it's not illegal.
+	act("play_card", card);
+}
 
 //Transition the page to the state that prompts the user for a nickname
 function showConnect () {

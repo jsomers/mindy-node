@@ -130,7 +130,7 @@ var game = new function() {
 		this.hands[this.players[2]] = this.deck.slice(10, 15)
 		this.hands[this.players[3]] = this.deck.slice(15, 20)
 	}
-	
+
 	this.dealRest = function() {
 		var cards_left = this.deck.slice(20, 52);
 		this.hands[this.players[0]] = this.hands[this.players[0]].concat(cards_left.slice(0, 8));
@@ -139,6 +139,19 @@ var game = new function() {
 		this.hands[this.players[3]] = this.hands[this.players[3]].concat(cards_left.slice(24, 32));
 	}
 	
+	this.playCard = function(plyr, card) {
+		//TODO: assert that current_player = plyr;
+		this.hands[plyr].splice(this.hands[plyr].indexOf(card), 1); // rm card from player hand.
+		this.cards_played += 1;
+		this.current_trick.push(card);
+		if (this.current_trick.length == 4) {
+			this.finished_tricks.push(this.current_trick);
+			// TODO: must assign a winner to tricks. Write function to do this.
+			this.current_trick = [];
+		};
+		this.current_player = this.players[(this.players.indexOf(this.current_player) + 1) % 4];
+	};
+	
 	this.appendAction = function (uid, type, content) {
 	  var a = { uid: uid
 	          , type: type // "deal_five", "deal_rest", "choose_trump", "play_card"
@@ -146,12 +159,21 @@ var game = new function() {
 	          , timestamp: (new Date()).getTime()
 	          };
     
+	  // TODO: error & sanity checking on the basic game functions.
 	  switch (type) {
+	    case "join":
+		  game.players.push(uid);
+	      break;
 	    case "deal_five":
 		  this.dealFive();
 	      break;
-	    case "join":
-	      break;
+		case "choose_trump":
+		  this.dealRest();
+		  this.trump = content;
+		  break;
+		case "play_card":
+		  this.playCard(uid, content);
+		  break;
 	    case "part":
 	      break;
 	  }
@@ -269,7 +291,7 @@ fu.get("/join", function (req, res) {
   //sys.puts("connection: " + nick + "@" + res.connection.remoteAddress);
 
   channel.appendMessage(session.nick, "join");
-  game.appendAction(session.id, "join", null);
+  game.appendAction(session.id, "join", null); //TODO: allow reconnects, etc.
   res.simpleJSON(200, { id: session.id, nick: session.nick});
 });
 
