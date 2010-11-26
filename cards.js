@@ -88,18 +88,24 @@ draw_card = function(c, x, y) {
 draw_hand = function(hand) {
 	for (i in hand) {
 		draw_card(hand[i], i);
-	}
+	};
 };
 
 $(document).ready(function() {
-	
+	old_z = null;
 	var max_z = 0;
 	$(".card").live("mouseover", function(ev) {
+		old_z = $(this).zIndex();
 		max_z += 1
 		$(this).zIndex(max_z);
 	})
 	$(".card").live("mouseout", function(ev) {
-		//$(this).zIndex();
+		$(this).zIndex(old_z);
 	})
+	$(".card").live("click", function(ev) {
+		max_z += 1
+		old_z = max_z
+		$(this).zIndex(max_z);
+	});
 })
 

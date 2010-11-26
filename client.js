@@ -1,3 +1,5 @@
+//TODO: look into crazy frenzy of requests on disconnect. Should just say "long poll error". Something to do with new jquery or card code?
+
 var CONFIG = { debug: false
              , nick: "#"   // set in onConnect
              , id: null    // set in onConnect
@@ -434,6 +436,12 @@ $(document).ready(function() {
   longPoll();
 
   showConnect();
+
+  $(".card").live("dblclick", function() {
+	var crd = $(this).attr("id");
+	play(crd);
+	$(this).remove();
+  })
 });
 
 //if we can, notify the server that we're going away.
