@@ -322,7 +322,10 @@ fu.get("/client.js", fu.staticHandler("client.js"));
 fu.get("/cards.js", fu.staticHandler("cards.js"));
 fu.get("/jquery-1.4.2.min.js", fu.staticHandler("jquery-1.4.2.min.js"));
 fu.get("/jquery-ui.js", fu.staticHandler("jquery-ui.js"));
-
+fu.get("/images/jack.gif", fu.staticHandler("images/jack.gif"));
+fu.get("/images/cardback.gif", fu.staticHandler("images/cardback.gif"));
+fu.get("/images/king.gif", fu.staticHandler("images/king.gif"));
+fu.get("/images/queen.gif", fu.staticHandler("images/queen.gif"));
 
 fu.get("/who", function (req, res) {
   var nicks = [];

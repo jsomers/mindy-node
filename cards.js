@@ -26,6 +26,23 @@ function resizeCards(d) {
   return false;
 }
 
+card_ranks = {
+	"2": 2,
+	"3": 3,
+	"4": 4,
+	"5": 5,
+	"6": 6,
+	"7": 7,
+	"8": 8,
+	"9": 9,
+	"10": 10,
+	"J": 11,
+	"Q": 12,
+	"K": 13,
+	"A": 14,
+	"1": 10
+}
+
 draw_card = function(c, x, y) {
 	if (x == null) { x = 0 }
 	if (y == null) { y = 0 }
@@ -85,7 +102,37 @@ draw_card = function(c, x, y) {
 	return null;
 }
 
+ranksort = function(a, b) {
+	var ar = card_ranks[a.split("")[0]];
+	var br = card_ranks[b.split("")[0]];
+	return (ar - br);
+}
+
+sorted = function(hand) {
+	// diamonds, clubs, hearts, spades
+	var d = [];
+	var c = [];
+	var h = [];
+	var s = [];
+	for (i in hand) {
+		var crd = hand[i];
+		if (crd.indexOf("d") != -1) { 
+			d.push(crd) 
+		} else if (crd.indexOf("c") != -1) {
+			c.push(crd)
+		} else if (crd.indexOf("h") != -1) {
+			h.push(crd)
+		} else if (crd.indexOf("s") != -1) {
+			s.push(crd)
+		}
+	}
+	
+	return d.sort(ranksort).concat(c.sort(ranksort)).concat(h.sort(ranksort)).concat(s.sort(ranksort));
+	//sort_by_rank(d).concat(sort_by_rank(c)).concat(sort_by_rank(h)).concat(sort_by_rank(s));
+}
+
 draw_hand = function(hand) {
+	$(".card[id!=card_template]").remove();
 	for (i in hand) {
 		draw_card(hand[i], i);
 	};
@@ -108,4 +155,3 @@ $(document).ready(function() {
 		$(this).zIndex(max_z);
 	});
 })
-
